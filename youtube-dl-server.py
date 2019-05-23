@@ -23,32 +23,39 @@ app_defaults = {
     'YDL_SERVER_PORT': 8091,
 }
 
-
+mediaFromat = 'bestaudio/best'
 
 @app.route('/youtube-dl/cesur', method='GET')
-def cesur():
+def get_video_url():
+    video_url = request.query.get("videoURL")
+    mediaCodec = request.query.get("mediaCodec")
+
+    return get_video_url(mediaCodec, video_url)
+
+def get_video_url(mediaCodec, videoURL):
     ydl_opts = {
-        'format': 'bestaudio/best',
+        'format': 'bestvideo/best',
         'quiet': True,
         'no_warnings': True,
         'nocheckcertificate': True,
         'postprocessors': [{
             'key': 'FFmpegExtractAudio',
-            'preferredcodec': 'mp3',
+            'preferredcodec': mediaCodec,
             'preferredquality': '192',
         },
             {'key': 'FFmpegMetadata'},
         ],
     }
 
+    ydl_opts = get_ydl_options({'format': mediaCodec})
+    ydl_opts.setdefault("format", "bestvideo/best")
     # ydl = youtube_dl.YoutubeDL({'outtmpl': '%(id)s%(ext)s', 'nocheckcertificate': True})
     ydl = youtube_dl.YoutubeDL(ydl_opts) 
 
     with ydl:
         result = ydl.extract_info(
-            'http://www.youtube.com/watch?v=gqOZIhgEqac',
+            videoURL, # 'http://www.youtube.com/watch?v=gqOZIhgEqac',
             download=False, # We just want to extract the info
-             
         )
 
     if 'entries' in result:
@@ -93,20 +100,31 @@ def get_ydl_options(request_options):
         postprocessors.append({
             'key': 'FFmpegExtractAudio',
             'preferredcodec': ydl_vars['YDL_EXTRACT_AUDIO_FORMAT'],
-            'preferredquality': ydl_vars['YDL_EXTRACT_AUDIO_QUALITY'],
+            'preferredquality': ydl_vars['YDL_EXTRACT_AUDIO_QUALITY']
         })
+
+        postprocessors.append({'key': 'FFmpegMetadata'})
+
+        mediaFromat = 'bestaudio/best'
 
     if(ydl_vars['YDL_RECODE_VIDEO_FORMAT']):
         postprocessors.append({
             'key': 'FFmpegVideoConvertor',
-            'preferedformat': ydl_vars['YDL_RECODE_VIDEO_FORMAT'],
+            'preferedformat': ydl_vars['YDL_RECODE_VIDEO_FORMAT']
         })
 
+        postprocessors.append({'key': 'FFmpegMetadata'})
+
+        mediaFromat = 'bestvideo/best'
+
     return {
-        'format': ydl_vars['YDL_FORMAT'],
-        'postprocessors': postprocessors,
-        'outtmpl': ydl_vars['YDL_OUTPUT_TEMPLATE'],
-        'download_archive': ydl_vars['YDL_ARCHIVE_FILE']
+        'nocheckcertificate': True,
+        'quiet': True,
+        'no_warnings': True,
+        'format': mediaFromat, #ydl_vars['YDL_FORMAT'],
+        'postprocessors': postprocessors
+        # 'outtmpl': ydl_vars['YDL_OUTPUT_TEMPLATE'],
+        # 'download_archive': ydl_vars['YDL_ARCHIVE_FILE']
     }
 
 
