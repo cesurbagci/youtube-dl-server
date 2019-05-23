@@ -20,39 +20,48 @@ app_defaults = {
     'YDL_OUTPUT_TEMPLATE': '/youtube-dl/%(title)s [%(id)s].%(ext)s',
     'YDL_ARCHIVE_FILE': None,
     'YDL_SERVER_HOST': '0.0.0.0',
-    'YDL_SERVER_PORT': 8080,
+    'YDL_SERVER_PORT': 8088,
 }
 
 
-@app.route('/youtube-dl')
-def dl_queue_list():
-    return static_file('index.html', root='./')
 
-
-@app.route('/youtube-dl/static/:filename#.*#')
-def server_static(filename):
-    return static_file(filename, root='./static')
-
-
-@app.route('/youtube-dl/q', method='GET')
-def q_size():
-    return {"success": True, "size": json.dumps(list(dl_q.queue))}
-
-
-@app.route('/youtube-dl/q', method='POST')
-def q_put():
-    url = request.forms.get("url")
-    options = {
-        'format': request.forms.get("format")
+@app.route('/youtube-dl/cesur', method='GET')
+def cesur():
+    ydl_opts = {
+        'format': 'bestaudio/best',
+        'quiet': True,
+        'no_warnings': True,
+        'nocheckcertificate': True,
+        'postprocessors': [{
+            'key': 'FFmpegExtractAudio',
+            'preferredcodec': 'mp3',
+            'preferredquality': '192',
+        },
+            {'key': 'FFmpegMetadata'},
+        ],
     }
 
-    if not url:
-        return {"success": False, "error": "/q called without a 'url' query param"}
+    # ydl = youtube_dl.YoutubeDL({'outtmpl': '%(id)s%(ext)s', 'nocheckcertificate': True})
+    ydl = youtube_dl.YoutubeDL(ydl_opts) 
 
-    dl_q.put((url, options))
-    print("Added url " + url + " to the download queue")
-    return {"success": True, "url": url, "options": options}
+    with ydl:
+        result = ydl.extract_info(
+            'http://www.youtube.com/watch?v=gqOZIhgEqac',
+            download=False, # We just want to extract the info
+             
+        )
 
+    if 'entries' in result:
+        # Can be a playlist or a list of videos
+        video = result['entries'][0]
+    else:
+        # Just a video
+        video = result
+
+    print(video)
+    video_url = video['url']
+    print(video_url)
+    return {"success": True, "url": video_url}
 
 def dl_worker():
     while not done:
