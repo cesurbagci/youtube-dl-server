@@ -20,7 +20,7 @@ app_defaults = {
     'YDL_OUTPUT_TEMPLATE': '/youtube-dl/%(title)s [%(id)s].%(ext)s',
     'YDL_ARCHIVE_FILE': None,
     'YDL_SERVER_HOST': '0.0.0.0',
-    'YDL_SERVER_PORT': 8088,
+    'YDL_SERVER_PORT': 8091,
 }
 
 
