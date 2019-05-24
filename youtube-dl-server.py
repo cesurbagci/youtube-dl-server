@@ -25,31 +25,39 @@ app_defaults = {
 
 mediaFromat = 'bestaudio/best'
 
-@app.route('/youtube-dl/cesur', method='GET')
-def get_video_url():
+@app.route('/youtube-dl/getVideoInfo', method='GET')
+def get_video_info():
     video_url = request.query.get("videoURL")
     mediaCodec = request.query.get("mediaCodec")
 
-    return get_video_url(mediaCodec, video_url)
+    return __get_video_info(mediaCodec, video_url)
 
-def get_video_url(mediaCodec, videoURL):
-    ydl_opts = {
-        'format': 'bestvideo/best',
-        'quiet': True,
-        'no_warnings': True,
-        'nocheckcertificate': True,
-        'postprocessors': [{
-            'key': 'FFmpegExtractAudio',
-            'preferredcodec': mediaCodec,
-            'preferredquality': '192',
-        },
-            {'key': 'FFmpegMetadata'},
-        ],
-    }
+@app.route('/youtube-dl/search', method='GET')
+def search_youtube():
+    searchText = request.query.get("searchText") or ''
+    searchCount = request.query.get("searchCount") or 10
+    mediaCodec = request.query.get("mediaCodec") or 'mp3'
+    # mediaCodec = request.query.get("mediaCodec")
+    medias = __search_youtube(searchText, searchCount, mediaCodec)
+
+    return { "medias": medias }
+
+def __get_video_info(mediaCodec, videoURL):
+    # ydl_opts = {
+    #     'format': 'bestvideo/best',
+    #     'quiet': True,
+    #     'no_warnings': True,
+    #     'nocheckcertificate': True,
+    #     'postprocessors': [{
+    #         'key': 'FFmpegExtractAudio',
+    #         'preferredcodec': mediaCodec,
+    #         'preferredquality': '192',
+    #     },
+    #         {'key': 'FFmpegMetadata'},
+    #     ],
+    # }
 
     ydl_opts = get_ydl_options({'format': mediaCodec})
-    ydl_opts.setdefault("format", "bestvideo/best")
-    # ydl = youtube_dl.YoutubeDL({'outtmpl': '%(id)s%(ext)s', 'nocheckcertificate': True})
     ydl = youtube_dl.YoutubeDL(ydl_opts) 
 
     with ydl:
@@ -68,7 +76,23 @@ def get_video_url(mediaCodec, videoURL):
     print(video)
     video_url = video['url']
     print(video_url)
-    return {"success": True, "url": video_url}
+    # return { "error": None, "response": { "url": video_url } }
+    return video
+
+
+
+def __search_youtube(searchText, searchCount, mediaCodec):
+    ydl_opts = get_ydl_options({'format': 'mp4'})
+    with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+        result = ydl.extract_info("ytsearch" + str(searchCount) + ":" + searchText, download=False)
+        if 'entries' in result:
+            # Can be a playlist or a list of videos
+            medias = result['entries']
+        else:
+            # Just a video
+            medias = result
+
+    return medias
 
 def dl_worker():
     while not done:
@@ -121,6 +145,9 @@ def get_ydl_options(request_options):
         'nocheckcertificate': True,
         'quiet': True,
         'no_warnings': True,
+        'noplaylist': True,
+        'skip_download': True,
+        'forceurl': True,
         'format': mediaFromat, #ydl_vars['YDL_FORMAT'],
         'postprocessors': postprocessors
         # 'outtmpl': ydl_vars['YDL_OUTPUT_TEMPLATE'],
