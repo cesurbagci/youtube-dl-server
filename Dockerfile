@@ -22,4 +22,5 @@ EXPOSE 8091
 
 VOLUME ["/youtube-dl"]
 
-CMD [ "python", "-u", "./youtube-dl-server.py" ]
+# CMD [ "python", "-u", "./youtube-dl-server.py" ]
+CMD [ "python", "-u", "./run.py" ]
