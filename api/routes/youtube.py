@@ -26,8 +26,8 @@ def search():
     mediaCodec = request.args.get("mediaCodec") or 'mp3'
     # mediaCodec = request.query.get("mediaCodec")
     
-    result = youtubeController.search(searchText, searchCount, mediaCodec)
-
+    medias = youtubeController.search(searchText, searchCount, mediaCodec)
+    result = { "medias": medias }
     headers = {
     }
     return jsonify(result), 200, headers
