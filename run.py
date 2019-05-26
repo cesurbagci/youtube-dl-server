@@ -4,7 +4,7 @@ from collections import ChainMap
 
 app_defaults = {
     'YDL_SERVER_HOST': '0.0.0.0',
-    'YDL_SERVER_PORT': 8093
+    'YDL_SERVER_PORT': 8091
 }
 
 app_vars = ChainMap(os.environ, app_defaults)
