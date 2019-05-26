@@ -14,10 +14,10 @@ youtube_defaults = {
 
 app_vars = ChainMap(os.environ, youtube_defaults)
 
-class youtubeController():
+class youtubeDLController():
     @staticmethod
     def get_video_info(mediaCodec, videoURL):
-        ydl_opts = youtubeController.get_ydl_options({'format': mediaCodec})
+        ydl_opts = youtubeDLController.get_ydl_options({'format': mediaCodec})
         ydl = youtube_dl.YoutubeDL(ydl_opts) 
 
         with ydl:
@@ -98,7 +98,7 @@ class youtubeController():
         }
     @staticmethod
     def search(searchText, searchCount, mediaCodec):
-        ydl_opts = youtubeController.get_ydl_options({'format': 'mp4'})
+        ydl_opts = youtubeDLController.get_ydl_options({'format': 'mp4'})
         with youtube_dl.YoutubeDL(ydl_opts) as ydl:
             result = ydl.extract_info("ytsearch" + str(searchCount) + ":" + searchText, download=False)
             if 'entries' in result:
