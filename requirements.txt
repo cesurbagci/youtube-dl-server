@@ -5,3 +5,4 @@ youtube-dl
 flask
 jsonify
 Blueprint
+waitress

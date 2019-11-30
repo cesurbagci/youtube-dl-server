@@ -7,7 +7,7 @@ from collections import ChainMap
 
 youtube_defaults = {
     'YDL_FORMAT': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]',
-    'YDL_EXTRACT_AUDIO_FORMAT': None,
+    'YDL_EXTRACT_AUDIO_FORMAT': 'mp3',
     'YDL_EXTRACT_AUDIO_QUALITY': '192',
     'YDL_RECODE_VIDEO_FORMAT': None
 }
@@ -21,6 +21,7 @@ class youtubeDLController():
         ydl = youtube_dl.YoutubeDL(ydl_opts) 
 
         with ydl:
+            ydl.add_default_info_extractors()
             result = ydl.extract_info(
                 videoURL, # 'http://www.youtube.com/watch?v=gqOZIhgEqac',
                 download=False, # We just want to extract the info
@@ -32,10 +33,19 @@ class youtubeDLController():
         else:
             # Just a video
             video = result
+        
         video_url = video['url']
-        print(video_url)
+        video_title = ('' if video['artist'] == None else video['artist']) + ('' if video['track'] == None else ' - ' + video['track'])
+        video_title = video['title'] if len(video_title) <= 1 else video_title
+        video_title = video['id'] if len(video_title) <= 1 else video_title
+        
+        audioInfo = {
+            'url': video_url,
+            'title': video_title
+        }
+        # print(video_url)
         # return { "error": None, "response": { "url": video_url } }
-        return video
+        return audioInfo
         # return app.response_class(video, content_type='application/json')
         # return jsonify(video)
         # return app.response_class(video, content_type='application/json')
@@ -50,6 +60,7 @@ class youtubeDLController():
             'YDL_RECODE_VIDEO_FORMAT': None,
         }
 
+        ydl_vars = dict(ChainMap(youtube_defaults))
         requested_format = request_options.get('format', 'bestvideo')
 
         if requested_format in ['aac', 'flac', 'mp3', 'm4a', 'opus', 'vorbis', 'wav']:
@@ -58,8 +69,6 @@ class youtubeDLController():
             request_vars['YDL_EXTRACT_AUDIO_FORMAT'] = 'best'
         elif requested_format in ['mp4', 'flv', 'webm', 'ogg', 'mkv', 'avi']:
             request_vars['YDL_RECODE_VIDEO_FORMAT'] = requested_format
-
-        ydl_vars = ChainMap(youtube_defaults)
 
         postprocessors = []
 
@@ -70,11 +79,12 @@ class youtubeDLController():
                 'preferredquality': ydl_vars['YDL_EXTRACT_AUDIO_QUALITY']
             })
 
-            postprocessors.append({'key': 'FFmpegMetadata'})
+            # postprocessors.append({'key': 'FFmpegMetadata'})
+            postprocessors.append({'key': 'FFmpegExtractAudio'})
 
             mediaFromat = 'bestaudio/best'
 
-        if(ydl_vars['YDL_RECODE_VIDEO_FORMAT']):
+        if(request_vars['YDL_RECODE_VIDEO_FORMAT']):
             postprocessors.append({
                 'key': 'FFmpegVideoConvertor',
                 'preferedformat': ydl_vars['YDL_RECODE_VIDEO_FORMAT']
@@ -85,6 +95,7 @@ class youtubeDLController():
             mediaFromat = 'bestvideo/best'
 
         return {
+            'outtmpl': '%(title)s-%(id)s.%(ext)s',
             'nocheckcertificate': True,
             'quiet': True,
             'no_warnings': True,
@@ -92,7 +103,10 @@ class youtubeDLController():
             'skip_download': True,
             'forceurl': True,
             'format': mediaFromat, #ydl_vars['YDL_FORMAT'],
-            'postprocessors': postprocessors
+            'forcefilename': True,
+            'forcetitle': True,
+            'postprocessors': postprocessors,
+            'consoletitle ': True
             # 'outtmpl': ydl_vars['YDL_OUTPUT_TEMPLATE'],
             # 'download_archive': ydl_vars['YDL_ARCHIVE_FILE']
         }

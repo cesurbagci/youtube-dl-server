@@ -4,5 +4,5 @@ from api.routes.youtube import youtube
 
 app = Flask(__name__)
 
-app.register_blueprint(youtube, url_prefix='/youtube')
+app.register_blueprint(youtube, url_prefix='/music')
 # app.register_blueprint(admin, url_prefix='/admin')
